@@ -11,6 +11,13 @@
         <input matInput (input)="onSearch($event)" placeholder="Search users by email...">
         <mat-icon matSuffix>search</mat-icon>
       </mat-form-field>
+      <mat-form-field appearance="outline" class="role-filter">
+        <mat-label>Role</mat-label>
+        <mat-select [(value)]="selectedRole" (selectionChange)="onRoleChange($event.value)">
+          <mat-option [value]="null">All</mat-option>
+          <mat-option *ngFor="let r of roles" [value]="r">{{r}}</mat-option>
+        </mat-select>
+      </mat-form-field>
     </div>
     
     <table mat-table [dataSource]="users()" class="custom-table mat-elevation-z1">

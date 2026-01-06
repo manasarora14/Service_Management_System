@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http'; // Added HttpPara
 import { Injectable, inject } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { RequestStatus, ServiceCategory, ServiceRequest } from '../models/service-models';
+import { RequestStatus, ServiceCategory, ServiceRequest, Priority } from '../models/service-models';
 import { DashboardStats } from '../models/dashboard-stats';
 
 
@@ -24,20 +24,21 @@ export class RequestService {
   private apiUrl = 'https://localhost:7115/api/ServiceRequest';
 
   // HELPER: Private method to build query parameters
-  private getQueryParams(page: number, size: number, search?: string, status?: RequestStatus): HttpParams {
+  private getQueryParams(page: number, size: number, search?: string, status?: RequestStatus, priority?: Priority | number): HttpParams {
     let params = new HttpParams()
       .set('pageNumber', page.toString())
       .set('pageSize', size.toString());
 
     if (search) params = params.set('searchTerm', search);
     if (status !== undefined && status !== null) params = params.set('statusFilter', status.toString());
+    if (priority !== undefined && priority !== null) params = params.set('priorityFilter', String(priority));
     
     return params;
   }
 
   
-  getAllRequests(page: number = 1, size: number = 10, search?: string, status?: RequestStatus): Observable<PagedResponse<ServiceRequest>> {
-    const params = this.getQueryParams(page, size, search, status);
+  getAllRequests(page: number = 1, size: number = 10, search?: string, status?: RequestStatus, priority?: Priority | number): Observable<PagedResponse<ServiceRequest>> {
+    const params = this.getQueryParams(page, size, search, status, priority);
     return this.http.get<PagedResponse<ServiceRequest>>(`${this.apiUrl}/monitor-all`, { params });
   }
   getTechnicianWorkload(page: number = 1, size: number = 5): Observable<any> {

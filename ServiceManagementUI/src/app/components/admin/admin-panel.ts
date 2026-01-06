@@ -36,6 +36,7 @@ export class AdminPanel implements OnInit {
   private searchSubject = new Subject<string>();
 
   roles = ['Admin', 'Manager', 'Technician', 'Customer'];
+  selectedRole: string | null = null;
   displayedColumns: string[] = ['email', 'role', 'actions'];
 
   constructor() {
@@ -65,9 +66,15 @@ export class AdminPanel implements OnInit {
     this.loadUsers();
   }
 
+  onRoleChange(value: string | null) {
+    this.selectedRole = value;
+    this.currentPage = 1;
+    this.loadUsers();
+  }
+
   loadUsers() {
     
-    this.adminService.getAllUsers(this.currentPage, this.pageSize, this.searchQuery).subscribe({
+    this.adminService.getAllUsers(this.currentPage, this.pageSize, this.searchQuery, this.selectedRole ?? undefined).subscribe({
       next: (res: any) => {
       
         const raw: User[] = res.items || res;
@@ -75,9 +82,14 @@ export class AdminPanel implements OnInit {
         
         if (!res.totalCount && Array.isArray(res)) {
           
-          const filtered = this.searchQuery
+          // If server returned a raw array (no paging), apply client-side search and role filter
+          let filtered = this.searchQuery
             ? raw.filter(u => (u.email || '').toLowerCase().includes(this.searchQuery.toLowerCase()))
             : raw;
+
+          if (this.selectedRole) {
+            filtered = filtered.filter(u => String(u.role).toLowerCase() === String(this.selectedRole).toLowerCase());
+          }
 
           const start = (this.currentPage - 1) * this.pageSize;
           const paged = filtered.slice(start, start + this.pageSize);

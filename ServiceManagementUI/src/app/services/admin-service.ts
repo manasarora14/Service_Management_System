@@ -26,13 +26,17 @@ export class AdminService {
     return this.http.post(this.categoryUrl, category);
   }
   
-getAllUsers(page: number = 1, size: number = 10, search?: string): Observable<any> {
+getAllUsers(page: number = 1, size: number = 10, search?: string, role?: string): Observable<any> {
   let params = new HttpParams()
     .set('pageNumber', page.toString())
     .set('pageSize', size.toString());
 
   if (search) {
     params = params.set('searchTerm', search);
+  }
+
+  if (role !== undefined && role !== null && String(role).trim() !== '') {
+    params = params.set('roleFilter', role);
   }
 
   return this.http.get<any>(`${this.adminUrl}/users`, { params });

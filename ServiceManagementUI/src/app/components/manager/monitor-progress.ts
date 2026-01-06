@@ -11,6 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator'; 
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field'; 
+import { MatSelectModule } from '@angular/material/select';
 import { RouterModule } from '@angular/router';
 import { ServiceRequest, RequestStatus, Priority } from '../../models/service-models';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs'; 
@@ -21,7 +22,7 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
   imports: [
     CommonModule, RouterModule, MatTableModule, MatChipsModule, MatIconModule, 
     MatCardModule, MatButtonModule, MatPaginatorModule, MatInputModule, 
-    MatFormFieldModule, FormsModule
+    MatFormFieldModule, MatSelectModule, FormsModule
   ],
   templateUrl: './monitor-progress.html',
   styleUrl: './monitor-progress.css'
@@ -37,6 +38,8 @@ export class MonitorProgress implements OnInit {
   pageSize = 10;
   currentPage = 1;
   searchQuery = '';
+  selectedPriority: number | null = null;
+  Priority = Priority;
   private searchSubject = new Subject<string>();
 
   displayedColumns: string[] = ['id', 'customer', 'technician', 'priority', 'status', 'pricing', 'notes', 'actions'];
@@ -74,6 +77,12 @@ export class MonitorProgress implements OnInit {
     this.searchSubject.next(value);
   }
 
+  onPriorityChange(value: number | null) {
+    this.selectedPriority = value;
+    this.currentPage = 1;
+    this.loadMonitorData();
+  }
+
   onPageChange(event: PageEvent) {
     this.currentPage = event.pageIndex + 1;
     this.pageSize = event.pageSize;
@@ -87,7 +96,8 @@ export class MonitorProgress implements OnInit {
         users.forEach((u: { id: any; }) => userMap.set(String(u.id), u));
 
        
-        this.requestService.getAllRequests(this.currentPage, this.pageSize, this.searchQuery).subscribe({
+        console.debug('Loading monitor data', { page: this.currentPage, size: this.pageSize, search: this.searchQuery, priority: this.selectedPriority });
+        this.requestService.getAllRequests(this.currentPage, this.pageSize, this.searchQuery, undefined, this.selectedPriority ?? undefined).subscribe({
           next: (res) => {
             const enriched = res.items.map(r => {
               const cust = userMap.get(String(r.customerId));
@@ -108,8 +118,16 @@ export class MonitorProgress implements OnInit {
                 technicianName: r.technicianName || (tech ? this.formatName((tech.email || tech.name) as string) : '')
               };
             });
-            this.allRequests.set(enriched);
-            this.totalRecords.set(res.totalCount);
+            // Apply client-side priority filter as a fallback if backend doesn't filter
+            let filtered = enriched;
+            if (this.selectedPriority !== null && this.selectedPriority !== undefined) {
+              filtered = enriched.filter(it => Number(it.priority) === Number(this.selectedPriority));
+            }
+
+            this.allRequests.set(filtered);
+            // If we applied client-side filtering, use the filtered length for paginator; otherwise use server total
+            const total = (this.selectedPriority !== null && this.selectedPriority !== undefined) ? filtered.length : (res.totalCount ?? filtered.length);
+            this.totalRecords.set(total);
           },
           error: (err) => console.error('Monitor error fetching requests:', err)
         });

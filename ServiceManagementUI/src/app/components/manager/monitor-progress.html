@@ -8,6 +8,15 @@
         <input matInput (input)="onSearchChange($event)" placeholder="Ex. Water Leak">
         <mat-icon matSuffix>search</mat-icon>
       </mat-form-field>
+      <mat-form-field appearance="outline" class="priority-field">
+        <mat-label>Priority</mat-label>
+        <mat-select [(value)]="selectedPriority" (selectionChange)="onPriorityChange($event.value)">
+          <mat-option [value]="null">All</mat-option>
+          <mat-option [value]="Priority.Low">Low</mat-option>
+          <mat-option [value]="Priority.Medium">Medium</mat-option>
+          <mat-option [value]="Priority.High">High</mat-option>
+        </mat-select>
+      </mat-form-field>
     </div>
   </mat-card>
 
