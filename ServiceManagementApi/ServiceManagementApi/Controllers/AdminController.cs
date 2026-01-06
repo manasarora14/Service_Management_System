@@ -34,4 +34,18 @@ public class AdminController : ControllerBase
 
         return Ok(new { message = $"Role updated to {model.NewRole} successfully" });
     }
+
+    [HttpDelete("delete-user/{id}")]
+    public async Task<IActionResult> DeleteUser(string id)
+    {
+        var result = await _adminService.DeleteUserAsync(id);
+        if (!result.Succeeded)
+        {
+            // This takes the "Description" we wrote in the Service and sends it to Angular
+            var errorDescription = result.Errors.FirstOrDefault()?.Description ?? "User could not be deleted.";
+            return BadRequest(new { message = errorDescription });
+        }
+
+        return Ok(new { message = "User deleted successfully" });
+    }
 }

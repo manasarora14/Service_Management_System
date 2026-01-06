@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator'; 
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatIconModule } from '@angular/material/icon'; 
+import { MatButtonModule } from '@angular/material/button'; 
 import { AdminService } from '../../services/admin-service'; 
 import { User } from '../../models/service-models'; 
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -18,7 +19,7 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
   imports: [
     CommonModule, FormsModule, MatTableModule, MatSelectModule, 
     MatFormFieldModule, MatInputModule, MatPaginatorModule,
-    MatSnackBarModule, MatIconModule
+    MatSnackBarModule, MatIconModule, MatButtonModule
   ],
   templateUrl: './admin-panel.html',
   styleUrls: ['./admin-panel.css']
@@ -38,6 +39,8 @@ export class AdminPanel implements OnInit {
   roles = ['Admin', 'Manager', 'Technician', 'Customer'];
   selectedRole: string | null = null;
   displayedColumns: string[] = ['email', 'role', 'actions'];
+
+  pendingDeleteId = signal<string | null>(null);
 
   constructor() {
     
@@ -117,6 +120,29 @@ export class AdminPanel implements OnInit {
       },
       error: (err) => {
         this.snackBar.open('Failed to update role', 'Close', { duration: 3000 });
+      }
+    });
+  }
+
+  requestDelete(userId: string) {
+    this.pendingDeleteId.set(userId);
+  }
+
+  cancelDelete() {
+    this.pendingDeleteId.set(null);
+  }
+
+  confirmDelete(userId: string) {
+    this.adminService.deleteUser(userId).subscribe({
+      next: () => {
+        this.snackBar.open('User deleted successfully', 'Close', { duration: 3000 });
+        this.pendingDeleteId.set(null);
+        this.loadUsers();
+      },
+      error: (err) => {
+        const msg = err?.error?.message || err?.error || 'Cannot delete user; user has associated work.';
+        this.snackBar.open(msg, 'Close', { duration: 5000 });
+        this.pendingDeleteId.set(null);
       }
     });
   }

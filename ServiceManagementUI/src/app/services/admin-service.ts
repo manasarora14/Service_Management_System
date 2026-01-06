@@ -47,6 +47,10 @@ getAllUsers(page: number = 1, size: number = 10, search?: string, role?: string)
     return this.http.put(`${this.categoryUrl}/${id}`, category);
   }
 
+  deleteUser(userId: string): Observable<any> {
+    return this.http.delete(`${this.adminUrl}/delete-user/${userId}`);
+  }
+
   
 deleteServiceCategory(id: number): Observable<any> {
  
