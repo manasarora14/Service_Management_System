@@ -40,20 +40,41 @@ export class NotificationService {
   }
 
   private handleNewNotification(message: string) {
+    // Try to parse structured payloads (server may send JSON with target info)
+    let payload: any = null;
+    try {
+      payload = JSON.parse(message);
+    } catch {
+      payload = null;
+    }
 
-    this.snackBar.open(message, 'OK', {
+    const currentEmail = String(this.auth.currentUser()?.email || '').toLowerCase();
+
+    // Determine recipient / broadcast
+    const isBroadcast = payload?.broadcast === true || payload?.target === 'all' || payload?.to === 'all';
+    const targetEmail = (payload?.recipientEmail || payload?.userEmail || payload?.email || payload?.toEmail || payload?.targetEmail) ? String(payload?.recipientEmail || payload?.userEmail || payload?.email || payload?.toEmail || payload?.targetEmail).toLowerCase() : null;
+
+    // If payload contains a target and it doesn't match current user, ignore it
+    if (!isBroadcast && targetEmail && targetEmail !== currentEmail) {
+      return; // not for this user
+    }
+
+    // Build message text
+    const text = payload?.message || payload?.text || payload?.body || message;
+
+    this.snackBar.open(text, 'OK', {
       duration: 5000,
       horizontalPosition: 'right',
       verticalPosition: 'top'
     });
 
-   
-    const newNotif = { 
-      message, 
-      date: new Date(), 
-      read: false 
+    const newNotif = {
+      message: text,
+      date: new Date(),
+      read: false,
+      raw: payload ?? null
     };
-    
+
     this.notifications.update(prev => [newNotif, ...prev]);
     this.unreadCount.update(count => count + 1);
   }
@@ -81,6 +102,11 @@ export class NotificationService {
   // a server-side SignalR push).
   notify(message: string) {
     if (!message) return;
+    // Allow structured messages to be passed as objects or strings
+    if (typeof message === 'object') {
+      try { this.handleNewNotification(JSON.stringify(message)); } catch { this.handleNewNotification(String(message)); }
+      return;
+    }
     this.handleNewNotification(message);
   }
 }

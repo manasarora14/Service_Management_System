@@ -64,3 +64,19 @@
     </div>
   }
 </div>
+
+<!-- Payment options dialog (simple overlay) -->
+<div class="payment-overlay" *ngIf="showPaymentDialog()">
+  <div class="payment-modal">
+    <h3>Select Payment Method</h3>
+    <div class="methods">
+      <button mat-button *ngFor="let m of paymentMethods" [class.selected]="paymentMethod === m" (click)="paymentMethod = m">
+        {{m}}
+      </button>
+    </div>
+    <div class="modal-actions">
+      <button mat-stroked-button (click)="closePaymentDialog()">Cancel</button>
+      <button mat-flat-button color="primary" [disabled]="!paymentMethod" (click)="confirmPayment()">Pay {{paymentMethod}}</button>
+    </div>
+  </div>
+</div>

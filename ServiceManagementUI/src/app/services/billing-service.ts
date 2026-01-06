@@ -18,8 +18,9 @@ export class BillingService {
     return this.http.get<any[]>(`${this.apiUrl}/my-invoices`, { params });
   }
 
-  payInvoiceAsync(invoiceId: number): Observable<any> {
-
-    return this.http.post(`${this.apiUrl}/pay/${invoiceId}`, {});
+  payInvoiceAsync(invoiceId: number, method?: string): Observable<any> {
+    const payload: any = {};
+    if (method) payload.method = method;
+    return this.http.post(`${this.apiUrl}/pay/${invoiceId}`, payload);
   }
 }
